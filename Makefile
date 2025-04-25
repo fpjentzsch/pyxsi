@@ -21,8 +21,8 @@ default: pyxsi.so
 
 VPATH=src
 
-CXX=g++-10
-CXXFLAGS=-Wall -Werror -g -fPIC -std=c++20 -I/usr/include/python3.10 -I$(XILINX_VIVADO)/data/xsim/include -Isrc
+CXX=g++
+CXXFLAGS=-Wall -Werror -g -fPIC -std=c++20 $$(python3-config --includes)  -I$(XILINX_VIVADO)/data/xsim/include -Isrc
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
