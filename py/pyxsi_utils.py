@@ -112,13 +112,6 @@ def launch_process_helper(args, proc_env=None, cwd=None):
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=proc_env, cwd=cwd
     ) as proc:
         (cmd_out, cmd_err) = proc.communicate()
-    #TODO: BEIM CALLER FILTERN!!!!:
-    # if cmd_out is not None:
-    #     cmd_out = cmd_out.decode("utf-8")
-    #     sys.stdout.write(cmd_out)
-    # if cmd_err is not None:
-    #     cmd_err = cmd_err.decode("utf-8")
-    #     sys.stderr.write(cmd_err)
     return (cmd_out, cmd_err)
 
 def locate_glbl() -> Optional[str]:
