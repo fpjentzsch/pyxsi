@@ -112,12 +112,13 @@ def launch_process_helper(args, proc_env=None, cwd=None):
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=proc_env, cwd=cwd
     ) as proc:
         (cmd_out, cmd_err) = proc.communicate()
-    if cmd_out is not None:
-        cmd_out = cmd_out.decode("utf-8")
-        sys.stdout.write(cmd_out)
-    if cmd_err is not None:
-        cmd_err = cmd_err.decode("utf-8")
-        sys.stderr.write(cmd_err)
+    #TODO: BEIM CALLER FILTERN!!!!:
+    # if cmd_out is not None:
+    #     cmd_out = cmd_out.decode("utf-8")
+    #     sys.stdout.write(cmd_out)
+    # if cmd_err is not None:
+    #     cmd_err = cmd_err.decode("utf-8")
+    #     sys.stderr.write(cmd_err)
     return (cmd_out, cmd_err)
 
 def locate_glbl() -> Optional[str]:
@@ -134,7 +135,7 @@ def locate_glbl() -> Optional[str]:
     return None
 
 
-def compile_sim_obj(top_module_name, source_list, sim_out_dir, debug=False):
+def compile_sim_obj(top_module_name, source_list, sim_out_dir, debug=False, logger=None):
     # create a .prj file with the source files
     with open(sim_out_dir + "/rtlsim.prj", "w") as f:
 
@@ -196,7 +197,34 @@ def compile_sim_obj(top_module_name, source_list, sim_out_dir, debug=False):
     if locate_glbl() is not None:
         cmd_xelab.insert(1, "work.glbl")
 
-    launch_process_helper(cmd_xelab, cwd=sim_out_dir)
+    def log_filtered(loglines, log):
+        filter_list = ["[VRFC 10-2263]", "[VRFC 10-311]",
+                       "[VRFC 10-3467]", "[VRFC 10-8434]", "[VRFC 10-8890]", "[VRFC 10-3609]", "[VRFC 10-3091]", "[XSIM 43-4099]", "[Common 17-14]", "work."]
+        
+        for logline in loglines:
+            if any(filter in logline for filter in filter_list):
+                continue
+
+            if "INFO:" in logline:
+                log.info(logline.replace("INFO:", ""))
+            elif "WARNING:" in logline:
+                log.warning(logline.replace("WARNING:", ""))
+            elif "ERROR:" in logline:
+                log.error(logline.replace("ERROR:", ""))
+            elif "CRITICAL:" in logline:
+                log.error(logline.replace("CRITICAL:", ""))
+            else:
+                log.info(logline)
+
+    cmdout, cmderr = launch_process_helper(cmd_xelab, cwd=sim_out_dir)
+    if cmdout.strip():
+        cmdout = cmdout.decode("utf-8").split("\n")
+        log_filtered(cmdout, logger)
+    if cmderr.strip():
+        cmderr = cmderr.decode("utf-8").split("\n")
+        log_filtered(cmderr, logger)
+
+
     out_so_relative_path = "xsim.dir/%s/xsimk.so" % top_module_name
     out_so_full_path = sim_out_dir + "/" + out_so_relative_path
 
